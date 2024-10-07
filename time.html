@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゲーム時間 & リアル時間ツール</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .clock {
+            font-size: 2em;
+            margin: 20px 0;
+        }
+        input {
+            font-size: 1em;
+            padding: 5px;
+        }
+        button {
+            font-size: 1em;
+            padding: 5px 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ゲーム時間 & リアル時間ツール</h1>
+
+    <div class="clock">
+        <p>リアル時間: <span id="realTime"></span></p>
+        <p>ゲーム内時間: <span id="gameTime"></span></p>
+    </div>
+
+    <div>
+        <label for="gameTimeInput">ゲーム内時間を設定:</label>
+        <input type="time" id="gameTimeInput">
+        <button onclick="setGameTime()">設定</button>
+    </div>
+
+    <script>
+        let gameDate = new Date();
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('realTime').textContent = now.toLocaleTimeString();
+
+            gameDate.setSeconds(gameDate.getSeconds() + 7);
+            document.getElementById('gameTime').textContent = gameDate.toLocaleTimeString();
+        }
+
+        function setGameTime() {
+            const input = document.getElementById('gameTimeInput').value;
+            const [hours, minutes] = input.split(':');
+            gameDate.setHours(hours, minutes, 0);
+        }
+
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
