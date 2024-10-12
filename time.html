@@ -45,18 +45,24 @@
     <script>
         let tarkovLeft = new Date();
         let tarkovRight = new Date();
+        let lastSyncTime = 0;
 
         function updateTimes() {
             const now = new Date();
             document.getElementById('realTime').textContent = now.toLocaleTimeString();
 
-            tarkovLeft.setSeconds(tarkovLeft.getSeconds() + 1);
-            tarkovRight.setSeconds(tarkovRight.getSeconds() + 1);
+            // 7倍速で時間を進める
+            const elapsedSeconds = (now.getTime() - lastSyncTime) / 1000;
+            const tarkovElapsedSeconds = elapsedSeconds * 7;
+
+            tarkovLeft.setSeconds(tarkovLeft.getSeconds() + tarkovElapsedSeconds);
+            tarkovRight.setSeconds(tarkovRight.getSeconds() + tarkovElapsedSeconds);
 
             document.getElementById('leftTime').textContent = tarkovLeft.toLocaleTimeString();
             document.getElementById('rightTime').textContent = tarkovRight.toLocaleTimeString();
 
             checkCultistSpawnTime();
+            lastSyncTime = now.getTime();
         }
 
         function checkCultistSpawnTime() {
@@ -76,15 +82,25 @@
             }
         }
 
-        fetch('https://tarkov-time.adam.id.au/api')
-            .then(response => response.json())
-            .then(data => {
-                tarkovLeft = new Date(`2000-01-01T${data.left}`);
-                tarkovRight = new Date(`2000-01-01T${data.right}`);
-                updateTimes();
-            })
-            .catch(error => console.error('Error:', error));
+        function syncTimeWithAPI() {
+            fetch('https://tarkov-time.adam.id.au/api')
+                .then(response => response.json())
+                .then(data => {
+                    tarkovLeft = new Date(`2000-01-01T${data.left}`);
+                    tarkovRight = new Date(`2000-01-01T${data.right}`);
+                    lastSyncTime = new Date().getTime();
+                    updateTimes();
+                })
+                .catch(error => console.error('Error:', error));
+        }
 
+        // 初回の時間同期
+        syncTimeWithAPI();
+
+        // 1分ごとに時間を同期
+        setInterval(syncTimeWithAPI, 60000);
+
+        // 約143ミリ秒（1秒の7分の1）ごとに更新
         setInterval(updateTimes, 1000 / 7);
     </script>
 </body>
