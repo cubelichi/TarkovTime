@@ -3,60 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ゲーム時間 & リアル時間ツール</title>
+    <title>Tarkov Time Display</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
             background-color: #f0f0f0;
         }
-        .clock {
-            font-size: 2em;
-            margin: 20px 0;
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transition: background-color 0.5s ease;
         }
-        input {
-            font-size: 1em;
-            padding: 5px;
+        h2 {
+            margin-top: 0;
         }
-        button {
-            font-size: 1em;
-            padding: 5px 10px;
-            margin: 10px;
+        #cultistSpawnTime {
+            font-weight: bold;
+            color: #ff0000;
+            display: none;
+        }
+        .cultist-active {
+            background-color: #ffcccc;
         }
     </style>
 </head>
 <body>
-    <h1>ゲーム時間 & リアル時間ツール</h1>
-
-    <div class="clock">
-        <p>リアル時間: <span id="realTime"></span></p>
-        <p>ゲーム内時間: <span id="gameTime"></span></p>
+    <div class="container" id="mainContainer">
+        <h2>時間表示</h2>
+        <p>現在時刻: <span id="realTime"></span></p>
+        <p>Tarkov Left: <span id="leftTime"></span></p>
+        <p>Tarkov Right: <span id="rightTime"></span></p>
+        <p id="cultistSpawnTime">Cultist SPAWN TIME</p>
     </div>
-
-    <div>
-        <label for="gameTimeInput">ゲーム内時間を設定:</label>
-        <input type="time" id="gameTimeInput">
-        <button onclick="setGameTime()">設定</button>
-    </div>
-
     <script>
-        let gameDate = new Date();
+        let tarkovLeft = new Date();
+        let tarkovRight = new Date();
 
-        function updateTime() {
+        function updateTimes() {
             const now = new Date();
             document.getElementById('realTime').textContent = now.toLocaleTimeString();
 
-            gameDate.setSeconds(gameDate.getSeconds() + 7);
-            document.getElementById('gameTime').textContent = gameDate.toLocaleTimeString();
+            tarkovLeft.setSeconds(tarkovLeft.getSeconds() + 1);
+            tarkovRight.setSeconds(tarkovRight.getSeconds() + 1);
+
+            document.getElementById('leftTime').textContent = tarkovLeft.toLocaleTimeString();
+            document.getElementById('rightTime').textContent = tarkovRight.toLocaleTimeString();
+
+            checkCultistSpawnTime();
         }
 
-        function setGameTime() {
-            const input = document.getElementById('gameTimeInput').value;
-            const [hours, minutes] = input.split(':');
-            gameDate.setHours(hours, minutes, 0);
+        function checkCultistSpawnTime() {
+            const leftHour = tarkovLeft.getHours();
+            const rightHour = tarkovRight.getHours();
+            const isCultistTime = (leftHour >= 22 || leftHour < 7) || (rightHour >= 22 || rightHour < 7);
+            
+            const cultistSpawnElement = document.getElementById('cultistSpawnTime');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            if (isCultistTime) {
+                cultistSpawnElement.style.display = 'block';
+                mainContainer.classList.add('cultist-active');
+            } else {
+                cultistSpawnElement.style.display = 'none';
+                mainContainer.classList.remove('cultist-active');
+            }
         }
 
-        setInterval(updateTime, 1000);
+        fetch('https://tarkov-time.adam.id.au/api')
+            .then(response => response.json())
+            .then(data => {
+                tarkovLeft = new Date(`2000-01-01T${data.left}`);
+                tarkovRight = new Date(`2000-01-01T${data.right}`);
+                updateTimes();
+            })
+            .catch(error => console.error('Error:', error));
+
+        setInterval(updateTimes, 1000 / 7);
     </script>
 </body>
 </html>
