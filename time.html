@@ -6,92 +6,169 @@
     <title>Tarkov Time Display</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #2c3e50;
+            color: #ecf0f1;
         }
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            transition: background-color 0.5s ease;
+            background-color: #34495e;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            max-width: 400px;
+            width: 100%;
         }
         h2 {
             margin-top: 0;
+            color: #14349F;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        p {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+        span {
+            font-weight: bold;
+            color: #ffffff;
         }
         #cultistSpawnTime {
-            font-weight: bold;
-            color: #ff0000;
-            display: none;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background-color: #2c3e50;
         }
         .cultist-active {
-            background-color: #ffcccc;
+            background-color: #AF634E !important; /* Changed to a softer red */
+            transform: scale(1.03);
+        }
+        .cultist-active #cultistSpawnTime {
+            background-color: #d35400; /* Changed to a softer orange-red */
+            color: #fff;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            p {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="mainContainer">
-        <h2>時間表示</h2>
+    <div id="mainContainer" class="container">
+        <h2>タルコフ時間&カルト状況</h2>
         <p>現在時刻: <span id="realTime"></span></p>
         <p>Tarkov Left: <span id="leftTime"></span></p>
         <p>Tarkov Right: <span id="rightTime"></span></p>
-        <p id="cultistSpawnTime">Cultist SPAWN TIME</p>
+        <div id="cultistSpawnTime"></div>
+        <p>カルト出現まで: <span id="cultistCountdown"></span></p>
+        <p>次のカルト出現時刻: <span id="nextCultistSpawnTime"></span></p>
     </div>
     <script>
-        let tarkovLeft = new Date();
-        let tarkovRight = new Date();
-
-        function updateTimes() {
-            const now = new Date();
-            document.getElementById('realTime').textContent = now.toLocaleTimeString();
-            tarkovLeft.setSeconds(tarkovLeft.getSeconds() + 1);
-            tarkovRight.setSeconds(tarkovRight.getSeconds() + 1);
-            document.getElementById('leftTime').textContent = tarkovLeft.toLocaleTimeString();
-            document.getElementById('rightTime').textContent = tarkovRight.toLocaleTimeString();
-            checkCultistSpawnTime();
+        // Time conversion functions
+        const tarkovRatio = 7;
+        
+        function hrs(num) {
+            return 1000 * 60 * 60 * num;
         }
-
-        function checkCultistSpawnTime() {
+        
+        function realTimeToTarkovTime(time, left) {
+            const oneDay = hrs(24);
+            const russia = hrs(3);
+            const offset = russia + (left ? 0 : hrs(12));
+            const tarkovTime = new Date((offset + (time.getTime() * tarkovRatio)) % oneDay);
+            return tarkovTime;
+        }
+        
+        function timeUntilRelative(until, left, date) {
+            const tarkovTime = realTimeToTarkovTime(date, left);
+            if (until < tarkovTime.getTime()) until += hrs(24);
+            const diffTarkov = until - tarkovTime.getTime();
+            const diffRT = diffTarkov / tarkovRatio;
+            return diffRT;
+        }
+        
+        function formatCountdown(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Update time displays
+        function updateTime() {
+            const now = new Date();
+            
+            // Update real time
+            document.getElementById('realTime').textContent = now.toLocaleTimeString();
+            
+            // Update Tarkov Left time
+            const tarkovLeftTime = realTimeToTarkovTime(now, true);
+            document.getElementById('leftTime').textContent = tarkovLeftTime.toLocaleTimeString();
+            
+            // Update Tarkov Right time
+            const tarkovRightTime = realTimeToTarkovTime(now, false);
+            document.getElementById('rightTime').textContent = tarkovRightTime.toLocaleTimeString();
+            
+            checkCultistSpawnTime(tarkovLeftTime, tarkovRightTime, now);
+        }
+        
+        function checkCultistSpawnTime(tarkovLeft, tarkovRight, realTime) {
             const leftHour = tarkovLeft.getHours();
             const rightHour = tarkovRight.getHours();
-            const isCultistTime = (leftHour >= 22 || leftHour < 7) || (rightHour >= 22 || rightHour < 7);
+            const isCultistTime = (leftHour >= 22 || leftHour < 5) || (rightHour >= 22 || rightHour < 5);
             
             const cultistSpawnElement = document.getElementById('cultistSpawnTime');
             const mainContainer = document.getElementById('mainContainer');
+            const countdownElement = document.getElementById('cultistCountdown');
+            const nextSpawnTimeElement = document.getElementById('nextCultistSpawnTime');
             
             if (isCultistTime) {
-                cultistSpawnElement.style.display = 'block';
+                cultistSpawnElement.textContent = "カルト出現中！";
                 mainContainer.classList.add('cultist-active');
+                countdownElement.textContent = "出現中";
+                nextSpawnTimeElement.textContent = "現在出現中";
             } else {
-                cultistSpawnElement.style.display = 'none';
+                cultistSpawnElement.textContent = "カルト未出現";
                 mainContainer.classList.remove('cultist-active');
+                
+                // Calculate time until next cultist spawn
+                const nextSpawnLeft = new Date(tarkovLeft);
+                nextSpawnLeft.setHours(22, 0, 0, 0);
+                if (leftHour >= 22) nextSpawnLeft.setDate(nextSpawnLeft.getDate() + 1);
+                
+                const nextSpawnRight = new Date(tarkovRight);
+                nextSpawnRight.setHours(22, 0, 0, 0);
+                if (rightHour >= 22) nextSpawnRight.setDate(nextSpawnRight.getDate() + 1);
+                
+                const timeUntilLeft = timeUntilRelative(nextSpawnLeft.getTime(), true, realTime);
+                const timeUntilRight = timeUntilRelative(nextSpawnRight.getTime(), false, realTime);
+                
+                const nextSpawnTime = Math.min(timeUntilLeft, timeUntilRight);
+                countdownElement.textContent = formatCountdown(nextSpawnTime);
+                
+                // Calculate and display next spawn real time
+                const nextRealSpawnTime = new Date(realTime.getTime() + nextSpawnTime);
+                nextSpawnTimeElement.textContent = nextRealSpawnTime.toLocaleTimeString();
             }
         }
-
-        function fetchTarkovTime() {
-            fetch('https://tarkov-time.adam.id.au/api')
-                .then(response => response.json())
-                .then(data => {
-                    tarkovLeft = new Date(`2000-01-01T${data.left}`);
-                    tarkovRight = new Date(`2000-01-01T${data.right}`);
-                    updateTimes();
-                })
-                .catch(error => console.error('Error:', error));
-        }
-
-        // 初回のAPI呼び出し
-        fetchTarkovTime();
-
-        // 1分ごとにAPIを呼び出す
-        setInterval(fetchTarkovTime, 60000);
-
-        // 7分の1秒ごとに時間を更新
-        setInterval(updateTimes, 1000 / 7);
+        
+        // Update time every second
+        setInterval(updateTime, 100);
     </script>
 </body>
 </html>
