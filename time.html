@@ -49,13 +49,10 @@
         function updateTimes() {
             const now = new Date();
             document.getElementById('realTime').textContent = now.toLocaleTimeString();
-
             tarkovLeft.setSeconds(tarkovLeft.getSeconds() + 1);
             tarkovRight.setSeconds(tarkovRight.getSeconds() + 1);
-
             document.getElementById('leftTime').textContent = tarkovLeft.toLocaleTimeString();
             document.getElementById('rightTime').textContent = tarkovRight.toLocaleTimeString();
-
             checkCultistSpawnTime();
         }
 
@@ -76,15 +73,24 @@
             }
         }
 
-        fetch('https://tarkov-time.adam.id.au/api')
-            .then(response => response.json())
-            .then(data => {
-                tarkovLeft = new Date(`2000-01-01T${data.left}`);
-                tarkovRight = new Date(`2000-01-01T${data.right}`);
-                updateTimes();
-            })
-            .catch(error => console.error('Error:', error));
+        function fetchTarkovTime() {
+            fetch('https://tarkov-time.adam.id.au/api')
+                .then(response => response.json())
+                .then(data => {
+                    tarkovLeft = new Date(`2000-01-01T${data.left}`);
+                    tarkovRight = new Date(`2000-01-01T${data.right}`);
+                    updateTimes();
+                })
+                .catch(error => console.error('Error:', error));
+        }
 
+        // 初回のAPI呼び出し
+        fetchTarkovTime();
+
+        // 1分ごとにAPIを呼び出す
+        setInterval(fetchTarkovTime, 60000);
+
+        // 7分の1秒ごとに時間を更新
         setInterval(updateTimes, 1000 / 7);
     </script>
 </body>
