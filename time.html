@@ -47,11 +47,11 @@
             background-color: #2c3e50;
         }
         .cultist-active {
-            background-color: #AF634E !important; /* Changed to a softer red */
+            background-color: #AF634E !important;
             transform: scale(1.03);
         }
         .cultist-active #cultistSpawnTime {
-            background-color: #d35400; /* Changed to a softer orange-red */
+            background-color: #d35400;
             color: #fff;
         }
         @media (max-width: 480px) {
@@ -78,7 +78,6 @@
         <p>次のカルト出現時刻: <span id="nextCultistSpawnTime"></span></p>
     </div>
     <script>
-        // Time conversion functions
         const tarkovRatio = 7;
         
         function hrs(num) {
@@ -88,7 +87,7 @@
         function realTimeToTarkovTime(time, left) {
             const oneDay = hrs(24);
             const russia = hrs(3);
-            const offset = russia + (left ? 0 : hrs(12));
+            const offset = russia + hrs(3) + (left ? 0 : hrs(12));
             const tarkovTime = new Date((offset + (time.getTime() * tarkovRatio)) % oneDay);
             return tarkovTime;
         }
@@ -109,18 +108,14 @@
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
         
-        // Update time displays
         function updateTime() {
             const now = new Date();
             
-            // Update real time
             document.getElementById('realTime').textContent = now.toLocaleTimeString();
             
-            // Update Tarkov Left time
             const tarkovLeftTime = realTimeToTarkovTime(now, true);
             document.getElementById('leftTime').textContent = tarkovLeftTime.toLocaleTimeString();
             
-            // Update Tarkov Right time
             const tarkovRightTime = realTimeToTarkovTime(now, false);
             document.getElementById('rightTime').textContent = tarkovRightTime.toLocaleTimeString();
             
@@ -146,7 +141,6 @@
                 cultistSpawnElement.textContent = "カルト未出現";
                 mainContainer.classList.remove('cultist-active');
                 
-                // Calculate time until next cultist spawn
                 const nextSpawnLeft = new Date(tarkovLeft);
                 nextSpawnLeft.setHours(22, 0, 0, 0);
                 if (leftHour >= 22) nextSpawnLeft.setDate(nextSpawnLeft.getDate() + 1);
@@ -161,13 +155,11 @@
                 const nextSpawnTime = Math.min(timeUntilLeft, timeUntilRight);
                 countdownElement.textContent = formatCountdown(nextSpawnTime);
                 
-                // Calculate and display next spawn real time
                 const nextRealSpawnTime = new Date(realTime.getTime() + nextSpawnTime);
                 nextSpawnTimeElement.textContent = nextRealSpawnTime.toLocaleTimeString();
             }
         }
         
-        // Update time every second
         setInterval(updateTime, 100);
     </script>
 </body>
