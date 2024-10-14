@@ -138,7 +138,7 @@
         function checkCultistSpawnTime(tarkovLeft, tarkovRight, realTime) {
             const leftHour = tarkovLeft.getHours();
             const rightHour = tarkovRight.getHours();
-            const isCultistTime = (leftHour >= 22 || leftHour < 5) || (rightHour >= 22 || rightHour < 5);
+            const isCultistTime = (leftHour >= 22 || leftHour < 7) || (rightHour >= 22 || rightHour < 7);
             
             const cultistSpawnElement = document.getElementById('cultistSpawnTime');
             const mainContainer = document.getElementById('mainContainer');
