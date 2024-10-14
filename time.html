@@ -54,6 +54,14 @@
             background-color: #d35400;
             color: #fff;
         }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        .checkbox-container input {
+            margin-right: 0.5rem;
+        }
         @media (max-width: 480px) {
             .container {
                 padding: 1.5rem;
@@ -76,9 +84,14 @@
         <div id="cultistSpawnTime"></div>
         <p>カルト出現まで: <span id="cultistCountdown"></span></p>
         <p>次のカルト出現時刻: <span id="nextCultistSpawnTime"></span></p>
+        <div class="checkbox-container">
+            <input type="checkbox" id="notifyCheckbox">
+            <label for="notifyCheckbox">カルトの出現時間を通知する</label>
+        </div>
     </div>
     <script>
         const tarkovRatio = 7;
+        let lastCultistState = false;
         
         function hrs(num) {
             return 1000 * 60 * 60 * num;
@@ -137,6 +150,10 @@
                 mainContainer.classList.add('cultist-active');
                 countdownElement.textContent = "出現中";
                 nextSpawnTimeElement.textContent = "現在出現中";
+                
+                if (!lastCultistState && document.getElementById('notifyCheckbox').checked) {
+                    alert("カルトが出現しました！");
+                }
             } else {
                 cultistSpawnElement.textContent = "カルト未出現";
                 mainContainer.classList.remove('cultist-active');
@@ -158,6 +175,8 @@
                 const nextRealSpawnTime = new Date(realTime.getTime() + nextSpawnTime);
                 nextSpawnTimeElement.textContent = nextRealSpawnTime.toLocaleTimeString();
             }
+            
+            lastCultistState = isCultistTime;
         }
         
         setInterval(updateTime, 100);
